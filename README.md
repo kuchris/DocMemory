@@ -324,6 +324,12 @@ Model files are stored inside the DocMemory project by default:
 <DOCMEMORY_DIR>/.models/
 ```
 
+## License
+Apache-2.0. See [LICENSE](LICENSE).
+
+## Support
+If this project saves you time, please consider giving it a GitHub star. It helps other people find the repo.
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=kuchris/DocMemory&type=Date)](https://www.star-history.com/#kuchris/DocMemory&Date)
