@@ -221,6 +221,4 @@ Model files are stored inside the DocMemory project by default:
 
 ## Star History
 
-Replace `OWNER/DocMemory` with the GitHub repository path before publishing.
-
-[![Star History Chart](https://api.star-history.com/svg?repos=OWNER/DocMemory&type=Date)](https://www.star-history.com/#OWNER/DocMemory&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=kuchris/DocMemory&type=Date)](https://www.star-history.com/#kuchris/DocMemory&Date)
