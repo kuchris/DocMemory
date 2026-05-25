@@ -2,6 +2,8 @@
 
 Local search memory for Markdown document folders.
 
+This is a personal project I built for searching converted Markdown documents from an agent workflow. I am sharing it because the local vector, DirectML, NPU, and CodeGraph workflow may save someone else some setup time.
+
 DocMemory builds a SQLite index inside a target documentation folder. It supports:
 
 - SQLite FTS keyword search
@@ -12,7 +14,7 @@ DocMemory builds a SQLite index inside a target documentation folder. It support
 
 ## Use With CodeGraph
 
-DocMemory works best together with CodeGraph:
+DocMemory pairs well with [CodeGraph](https://github.com/colbymchenry/codegraph), a separate open-source tool for source code structure analysis. CodeGraph is not part of DocMemory; the two tools are complementary:
 
 - Use CodeGraph for source code structure, callers, callees, and impact analysis.
 - Use DocMemory for design docs, converted PDFs, specs, operation notes, and historical Markdown.
@@ -31,8 +33,8 @@ Recommended agent workflow:
 Example prompt:
 
 ```text
-Use CodeGraph to trace the call path for PaymentRetryService.
-Then use DocMemory to search the docs for "payment retry timeout".
+Use CodeGraph to trace the call path for OrderService.
+Then use DocMemory to search the docs for "order retry timeout".
 Compare the implementation with the design docs and list any mismatches.
 Do not edit files yet.
 ```
@@ -40,8 +42,8 @@ Do not edit files yet.
 Another useful prompt:
 
 ```text
-Use CodeGraph to find what calls buildInvoicePayload.
-Use DocMemory to find the document that describes invoice payload fields.
+Use CodeGraph to find what calls formatOrderPayload.
+Use DocMemory to find the document that describes order payload fields.
 Tell me whether the current code matches the latest documented field rules.
 ```
 
@@ -61,15 +63,17 @@ This usually saves tokens in three ways:
 - search results include only focused chunks and line ranges
 - repeated questions reuse the local SQLite/vector index instead of re-reading raw docs
 
-Approximate savings:
+Hypothetical context reduction:
 
 ```text
-token saving ~= 1 - (tokens returned by search / tokens in full docs)
+context reduction ~= 1 - (tokens returned by search / tokens in full docs)
 ```
+
+These numbers are examples, not benchmarks. They assume a large Markdown folder and snippets around 300 tokens each; actual results depend on your chunk size and document structure.
 
 Document-only comparison:
 
-| Approach | Context sent to agent | Approx. tokens | Token saving |
+| Approach | Context sent to agent | Approx. tokens | Approx. reduction vs full-load baseline |
 | --- | --- | ---: | ---: |
 | Load full docs | Entire Markdown folder | 500,000 | 0% |
 | Search top 10 | 10 snippets x 300 tokens | 3,000 | 99.4% |
@@ -78,7 +82,7 @@ Document-only comparison:
 
 Code + docs workflow estimate:
 
-| Workflow | Context sent to agent | Approx. tokens | Token saving |
+| Workflow | Context sent to agent | Approx. tokens | Approx. reduction vs full-load baseline |
 | --- | --- | ---: | ---: |
 | Load code + docs directly | Source tree + documentation folder | 800,000 | 0% |
 | CodeGraph only | Relevant code symbols and call paths | 8,000 | 99.0% |
@@ -87,7 +91,7 @@ Code + docs workflow estimate:
 
 The combined workflow may use slightly more tokens than DocMemory alone, but it answers a harder question: whether code and docs agree.
 
-In practice, large Markdown folders often see 95-99% less context usage when agents search first and only open the few source files that matter.
+Compared with loading a whole documentation folder, search-first workflows can send far less context to the agent. The exact reduction depends on how many snippets and source files you open.
 
 For best results, keep search limits small:
 
@@ -100,13 +104,25 @@ For agents, prefer CodeGraph for code context, then MCP search for docs, then op
 ## Workflow
 
 1. Convert or drop documents into a Markdown folder.
-2. Initialize the folder once.
-3. Rebuild the index when Markdown files change.
+2. Initialize the folder once to write DocMemory config.
+3. Sync when Markdown files change to rebuild the index.
 4. Search from the CLI, or let an agent search through MCP.
 
 ```text
 Markdown docs -> .docmemory/docmemory.sqlite -> CLI / MCP search
 ```
+
+## Install
+
+Clone and run locally:
+
+```powershell
+git clone https://github.com/kuchris/DocMemory.git
+cd DocMemory
+uv run docmemory --help
+```
+
+The examples use PowerShell because this project was built and tested on Windows.
 
 ## Quick Start
 
@@ -115,6 +131,8 @@ Initialize an index inside a document folder:
 ```powershell
 uv run docmemory init -i <DOC_DIR>
 ```
+
+Here, `-i` means "initialize this target folder" and writes `.docmemory/config.ini` inside the document folder.
 
 Build keyword + vector indexes:
 
