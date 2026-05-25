@@ -10,6 +10,30 @@ DocMemory builds a SQLite index inside a target documentation folder. It support
 - experimental DirectML and OpenVINO/NPU vector builds
 - a read-only MCP server for agents
 
+## Token Efficiency
+
+DocMemory is designed for agent workflows where loading an entire documentation folder into context is too expensive.
+
+Instead of reading hundreds of Markdown files, an agent can call `docmemory_search` and receive only the most relevant snippets:
+
+```text
+large doc folder -> ranked snippets -> smaller prompt
+```
+
+This usually saves tokens in three ways:
+
+- the agent avoids scanning unrelated files
+- search results include only focused chunks and line ranges
+- repeated questions reuse the local SQLite/vector index instead of re-reading raw docs
+
+For best results, keep search limits small:
+
+```powershell
+uv run --extra vector docmemory search <DOC_DIR> "background worker retry behavior" --hybrid -n 5
+```
+
+For agents, prefer MCP search first, then open the original Markdown file only when the snippet is relevant.
+
 ## Workflow
 
 1. Convert or drop documents into a Markdown folder.
@@ -66,30 +90,6 @@ Hybrid search combines keyword and vector results:
 ```powershell
 uv run --extra vector docmemory search <DOC_DIR> "payment retry timeout design" --hybrid -n 5
 ```
-
-## Token Efficiency
-
-DocMemory is designed for agent workflows where loading an entire documentation folder into context is too expensive.
-
-Instead of reading hundreds of Markdown files, an agent can call `docmemory_search` and receive only the most relevant snippets:
-
-```text
-large doc folder -> ranked snippets -> smaller prompt
-```
-
-This usually saves tokens in three ways:
-
-- the agent avoids scanning unrelated files
-- search results include only focused chunks and line ranges
-- repeated questions reuse the local SQLite/vector index instead of re-reading raw docs
-
-For best results, keep search limits small:
-
-```powershell
-uv run --extra vector docmemory search <DOC_DIR> "background worker retry behavior" --hybrid -n 5
-```
-
-For agents, prefer MCP search first, then open the original Markdown file only when the snippet is relevant.
 
 ## Vector Models
 
