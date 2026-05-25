@@ -10,47 +10,6 @@ DocMemory builds a SQLite index inside a target documentation folder. It support
 - experimental DirectML and OpenVINO/NPU vector builds
 - a read-only MCP server for agents
 
-## Token Efficiency
-
-DocMemory is designed for agent workflows where loading an entire documentation folder into context is too expensive.
-
-Instead of reading hundreds of Markdown files, an agent can call `docmemory_search` and receive only the most relevant snippets:
-
-```text
-large doc folder -> ranked snippets -> smaller prompt
-```
-
-This usually saves tokens in three ways:
-
-- the agent avoids scanning unrelated files
-- search results include only focused chunks and line ranges
-- repeated questions reuse the local SQLite/vector index instead of re-reading raw docs
-
-Approximate savings:
-
-```text
-token saving ~= 1 - (tokens returned by search / tokens in full docs)
-```
-
-Example comparison:
-
-| Approach | Context sent to agent | Approx. tokens | Token saving |
-| --- | --- | ---: | ---: |
-| Load full docs | Entire Markdown folder | 500,000 | 0% |
-| Search top 10 | 10 snippets x 300 tokens | 3,000 | 99.4% |
-| Search top 5 | 5 snippets x 300 tokens | 1,500 | 99.7% |
-| Search top 3 | 3 snippets x 300 tokens | 900 | 99.8% |
-
-In practice, large Markdown folders often see 95-99% less context usage when agents search first and only open the few source files that matter.
-
-For best results, keep search limits small:
-
-```powershell
-uv run --extra vector docmemory search <DOC_DIR> "background worker retry behavior" --hybrid -n 5
-```
-
-For agents, prefer MCP search first, then open the original Markdown file only when the snippet is relevant.
-
 ## Use With CodeGraph
 
 DocMemory works best together with CodeGraph:
@@ -85,6 +44,58 @@ Use CodeGraph to find what calls buildInvoicePayload.
 Use DocMemory to find the document that describes invoice payload fields.
 Tell me whether the current code matches the latest documented field rules.
 ```
+
+## Token Efficiency
+
+DocMemory is designed for agent workflows where loading an entire documentation folder into context is too expensive.
+
+Instead of reading hundreds of Markdown files, an agent can call `docmemory_search` and receive only the most relevant snippets:
+
+```text
+large doc folder -> ranked snippets -> smaller prompt
+```
+
+This usually saves tokens in three ways:
+
+- the agent avoids scanning unrelated files
+- search results include only focused chunks and line ranges
+- repeated questions reuse the local SQLite/vector index instead of re-reading raw docs
+
+Approximate savings:
+
+```text
+token saving ~= 1 - (tokens returned by search / tokens in full docs)
+```
+
+Document-only comparison:
+
+| Approach | Context sent to agent | Approx. tokens | Token saving |
+| --- | --- | ---: | ---: |
+| Load full docs | Entire Markdown folder | 500,000 | 0% |
+| Search top 10 | 10 snippets x 300 tokens | 3,000 | 99.4% |
+| Search top 5 | 5 snippets x 300 tokens | 1,500 | 99.7% |
+| Search top 3 | 3 snippets x 300 tokens | 900 | 99.8% |
+
+Code + docs workflow estimate:
+
+| Workflow | Context sent to agent | Approx. tokens | Token saving |
+| --- | --- | ---: | ---: |
+| Load code + docs directly | Source tree + documentation folder | 800,000 | 0% |
+| CodeGraph only | Relevant code symbols and call paths | 8,000 | 99.0% |
+| DocMemory only | Top 5 doc snippets | 1,500 | 99.8% |
+| CodeGraph + DocMemory | Code path + top 5 doc snippets | 9,500 | 98.8% |
+
+The combined workflow may use slightly more tokens than DocMemory alone, but it answers a harder question: whether code and docs agree.
+
+In practice, large Markdown folders often see 95-99% less context usage when agents search first and only open the few source files that matter.
+
+For best results, keep search limits small:
+
+```powershell
+uv run --extra vector docmemory search <DOC_DIR> "background worker retry behavior" --hybrid -n 5
+```
+
+For agents, prefer CodeGraph for code context, then MCP search for docs, then open original files only when the snippet is relevant.
 
 ## Workflow
 
