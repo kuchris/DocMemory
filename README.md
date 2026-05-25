@@ -29,7 +29,7 @@ This usually saves tokens in three ways:
 Approximate savings:
 
 ```text
-token saving ≈ 1 - (tokens returned by search / tokens in full docs)
+token saving ~= 1 - (tokens returned by search / tokens in full docs)
 ```
 
 Example comparison:
@@ -37,9 +37,9 @@ Example comparison:
 | Approach | Context sent to agent | Approx. tokens | Token saving |
 | --- | --- | ---: | ---: |
 | Load full docs | Entire Markdown folder | 500,000 | 0% |
-| Search top 10 | 10 snippets × 300 tokens | 3,000 | 99.4% |
-| Search top 5 | 5 snippets × 300 tokens | 1,500 | 99.7% |
-| Search top 3 | 3 snippets × 300 tokens | 900 | 99.8% |
+| Search top 10 | 10 snippets x 300 tokens | 3,000 | 99.4% |
+| Search top 5 | 5 snippets x 300 tokens | 1,500 | 99.7% |
+| Search top 3 | 3 snippets x 300 tokens | 900 | 99.8% |
 
 In practice, large Markdown folders often see 95-99% less context usage when agents search first and only open the few source files that matter.
 
@@ -50,6 +50,41 @@ uv run --extra vector docmemory search <DOC_DIR> "background worker retry behavi
 ```
 
 For agents, prefer MCP search first, then open the original Markdown file only when the snippet is relevant.
+
+## Use With CodeGraph
+
+DocMemory works best together with CodeGraph:
+
+- Use CodeGraph for source code structure, callers, callees, and impact analysis.
+- Use DocMemory for design docs, converted PDFs, specs, operation notes, and historical Markdown.
+- Ask the agent to compare both before making code changes.
+
+Recommended agent workflow:
+
+```text
+1. Use CodeGraph to locate the relevant code path.
+2. Use DocMemory to find the matching design/spec documentation.
+3. Compare code behavior against the document.
+4. Report mismatches with file paths, doc paths, and line references.
+5. Only then edit code or docs.
+```
+
+Example prompt:
+
+```text
+Use CodeGraph to trace the call path for PaymentRetryService.
+Then use DocMemory to search the docs for "payment retry timeout".
+Compare the implementation with the design docs and list any mismatches.
+Do not edit files yet.
+```
+
+Another useful prompt:
+
+```text
+Use CodeGraph to find what calls buildInvoicePayload.
+Use DocMemory to find the document that describes invoice payload fields.
+Tell me whether the current code matches the latest documented field rules.
+```
 
 ## Workflow
 
