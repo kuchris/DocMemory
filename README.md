@@ -32,13 +32,14 @@ Approximate savings:
 token saving ≈ 1 - (tokens returned by search / tokens in full docs)
 ```
 
-Example:
+Example comparison:
 
-```text
-Full documentation folder: 500,000 tokens
-Search result: 5 snippets × 300 tokens = 1,500 tokens
-Estimated saving: 99.7%
-```
+| Approach | Context sent to agent | Approx. tokens | Token saving |
+| --- | --- | ---: | ---: |
+| Load full docs | Entire Markdown folder | 500,000 | 0% |
+| Search top 10 | 10 snippets × 300 tokens | 3,000 | 99.4% |
+| Search top 5 | 5 snippets × 300 tokens | 1,500 | 99.7% |
+| Search top 3 | 3 snippets × 300 tokens | 900 | 99.8% |
 
 In practice, large Markdown folders often see 95-99% less context usage when agents search first and only open the few source files that matter.
 
